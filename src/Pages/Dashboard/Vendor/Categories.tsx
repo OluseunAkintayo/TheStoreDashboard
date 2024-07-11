@@ -12,85 +12,78 @@ import {
 } from "@/components/ui/table";
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { IManufacturerResponse } from "@/lib/types/IManufacturer";
-import ManufacturersList from "@/components/Dashboard/ManufacturersList";
 import { Button } from "@/components/ui/button";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from 'yup';
 import { Loader } from "lucide-react";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-
-interface INewManufacturer {
-  name: string;
-}
+import { cn } from "@/lib/utils";
+import { ICategory, ICategoryResponse } from "@/lib/types/ICategory";
+import CategoryList from "@/components/Dashboard/CategoryList";
 
 const schema = yup.object().shape({
-  name: yup.string().required('Manufacturer name is required')
+  categoryName: yup.string().required('Category name is required'),
+  description: yup.string().required('Description is required')
 });
 
-export function Manufacturers() {
+export function Categories() {
   const { toast } = useToast()
   const [page,] = React.useState(1);
   const [loading, setLoading] = React.useState<boolean>(false);
   const [open, setOpen] = React.useState<boolean>(false);
   const token = sessionStorage.getItem('command');
 
-  const manufacturerForm = useForm({ resolver: yupResolver(schema) })
+  const categoryForm = useForm({ resolver: yupResolver(schema) });
+  const { handleSubmit, register, reset, formState: { errors: categoryErrors } } = categoryForm;
 
-  const manufacturers = useQuery({
-    queryKey: ['manufacturers', page],
+  const categoriesQuery = useQuery({
+    queryKey: ['categories', page],
     queryFn: async () => {
       const options: AxiosRequestConfig = {
-        url: "products/manufacturer/list",
+        url: "products/categories/list",
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`
         }
       }
       const res = await axios.request(options);
-      const data: IManufacturerResponse = res.data;
+      const data: ICategoryResponse = res.data;
       return data;
     },
     placeholderData: keepPreviousData,
-    refetchInterval: 30000
+    refetchInterval: 300000
   });
 
-  const submit: SubmitHandler<INewManufacturer> = async (values) => {
+  const submit: SubmitHandler<ICategory> = async (values) => {
     setLoading(true);
     const options: AxiosRequestConfig = {
-      url: "products/manufacturer/new",
+      url: "products/categories/new",
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`
       },
-      data: {
-        manufacturerName: values.name
-      }
+      data: values
     }
     try {
       const res = await axios.request(options);
       if (res.status === 200) {
-        manufacturers.refetch();
+        categoriesQuery.refetch();
         setLoading(false);
         setOpen(false);
-        manufacturerForm.reset();
+        reset();
         toast({
           title: "Success",
-          description: "Manufacturer created successfully"
+          description: "Product category created successfully"
         });
       } else {
         toast({
@@ -109,45 +102,51 @@ export function Manufacturers() {
     }
   }
 
+  const onClose = () => {
+    setOpen(false);
+    reset();
+  }
+
   return (
     <DBLayout>
       <section className="w-full">
         <div className="p-4">
           <div>
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-gray-700">Manufacturers</h1>
-              <AlertDialog open={open}>
+              <h1 className="text-xl font-bold text-gray-700">Brands</h1>
+              <AlertDialog open={open} onOpenChange={() => categoryForm.reset()}>
                 <AlertDialogTrigger asChild onClick={() => setOpen(true)}>
                   <Button>New</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>New Manufacturer</AlertDialogTitle>
+                    <AlertDialogTitle>New Category</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Adds a new manufacturer item
+                      Adds a new item category
                     </AlertDialogDescription>
                   </AlertDialogHeader>
-                  <Form {...manufacturerForm}>
-                    <form onSubmit={manufacturerForm.handleSubmit(submit)} className="mt-4">
-                      <FormField
-                        control={manufacturerForm.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Manufacturer Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter manufacturer's name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <AlertDialogFooter className="mt-8">
-                        <AlertDialogCancel disabled={loading} className="w-full" onClick={() => setOpen(false)}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction type="submit" disabled={loading} className="w-full">{loading ? <span className="animate-spin"><Loader /></span> : "Save"}</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </form>
-                  </Form>
+                  <form onSubmit={handleSubmit(submit)} autoComplete="off" className="mt-4 space-y-5">
+                    <div className="space-y-2">
+                      <label htmlFor="categoryName" className={cn(
+                        "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+                        categoryErrors.categoryName && "text-destructive"
+                      )}>Category Name</label>
+                      <Input placeholder="Enter category name" id="categoryName" {...register("categoryName")} />
+                      <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{categoryErrors.categoryName?.message}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="description" className={cn(
+                        "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+                        categoryErrors.description && "text-destructive"
+                      )}>Description</label>
+                      <Input placeholder="Enter description" id="description" {...register("description")} />
+                      <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{categoryErrors.description?.message}</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <Button disabled={loading}>{loading ? <span className="animate-spin"><Loader /></span> : "Submit"}</Button>
+                      <Button disabled={loading} onClick={onClose} type="button" variant="outline" className="hover:text-red-600 hover:border-red-600">Cancel</Button>
+                    </div>
+                  </form>
                 </AlertDialogContent>
               </AlertDialog>
             </div>
@@ -155,7 +154,7 @@ export function Manufacturers() {
           </div>
           <React.Fragment>
             {
-              manufacturers.isLoading && (
+              categoriesQuery.isLoading && (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -168,7 +167,7 @@ export function Manufacturers() {
                   <TableBody>
                     {
                       Array(10).fill(0).map((i) => (
-                        <TableRow key={i}>
+                        <TableRow key={i + 1}>
                           <TableCell className="font-medium"><Skeleton className="h-[32px] w-full bg-gray-300" /></TableCell>
                           <TableCell><Skeleton className="h-[32px] w-full bg-gray-300" /></TableCell>
                           <TableCell><Skeleton className="h-[32px] w-full bg-gray-300" /></TableCell>
@@ -183,16 +182,16 @@ export function Manufacturers() {
           </React.Fragment>
           <React.Fragment>
             {
-              (manufacturers.isError) && (
+              (categoriesQuery.isError) && (
                 <div className="p-4">
-                  <p className="text-red-600 text-wrap break-words">{JSON.stringify(manufacturers.error, null, 2)}</p>
+                  <p className="text-red-600 text-wrap break-words">{JSON.stringify(categoriesQuery.error, null, 2)}</p>
                 </div>
               )
             }
           </React.Fragment>
           <React.Fragment>
             {
-              (!manufacturers.isError && manufacturers.data && manufacturers.data.success) && <ManufacturersList data={manufacturers.data.data} />
+              (!categoriesQuery.isError && categoriesQuery.data && categoriesQuery.data.success) && <CategoryList data={categoriesQuery.data.data} />
             }
           </React.Fragment>
         </div>

@@ -20,7 +20,14 @@ export function Sidebar() {
             "block text-left text-sm px-4 py-1 hover:bg-accent",
             location.pathname === "/vendor/products" && "bg-accent"
           )}>
-            <Link to="/vendor/products" className="block w-full">Products List</Link></button>
+            <Link to="/vendor/products" className="block w-full">Products List</Link>
+          </button>
+          <button className={cn(
+            "block text-left text-sm px-4 py-1 hover:bg-accent",
+            location.pathname === "/vendor/categories" && "bg-accent"
+          )}>
+            <Link to="/vendor/categories" className="block w-full">Categories</Link>
+          </button>
           <button className={cn(
             "block text-left text-sm px-4 py-1 hover:bg-accent",
             location.pathname === "/vendor/brands" && "bg-accent"

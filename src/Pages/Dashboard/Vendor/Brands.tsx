@@ -1,8 +1,7 @@
+import React from "react";
 import DBLayout from "@components/Dashboard/DBLayout";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import axios, { AxiosRequestConfig } from "axios";
-import React from "react";
-import { Navigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -18,13 +17,13 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -68,51 +67,42 @@ export function Brands() {
   const brandForm = useForm({ resolver: yupResolver(schema) });
   const { handleSubmit, register, reset, setValue, watch, formState: { errors: brandErrors } } = brandForm;
 
-  const getManufacturers = async () => {
-    const options: AxiosRequestConfig = {
-      url: "products/manufacturer/list",
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    }
-    const res = await axios.request(options);
-    const data: IManufacturerResponse = res.data;
-    return data;
-  }
-
   const manufacturersQuery = useQuery({
     queryKey: ['manufacturers'],
-    queryFn: getManufacturers,
+    queryFn: async () => {
+      const options: AxiosRequestConfig = {
+        url: "products/manufacturer/list",
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+      const res = await axios.request(options);
+      const data: IManufacturerResponse = res.data;
+      return data;
+    },
     placeholderData: keepPreviousData,
     refetchInterval: 30000
   });
-
   const manufacturers = manufacturersQuery.data;
-
-  const getBrands = async () => {
-    const options: AxiosRequestConfig = {
-      url: "products/brands/list",
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    }
-    const res = await axios.request(options);
-    const data: IBrandResponse = res.data;
-    return data;
-  }
 
   const brands = useQuery({
     queryKey: ['brands', page],
-    queryFn: getBrands,
+    queryFn: async () => {
+      const options: AxiosRequestConfig = {
+        url: "products/brands/list",
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+      const res = await axios.request(options);
+      const data: IBrandResponse = res.data;
+      return data;
+    },
     placeholderData: keepPreviousData,
     refetchInterval: 300000
   });
-
-  if (!token || (token && token.length === 0)) {
-    return <Navigate to="/auth/login" />
-  }
 
   const submit: SubmitHandler<INewBrand> = async (values) => {
     setLoading(true);
@@ -159,7 +149,7 @@ export function Brands() {
   const onClose = () => {
     setOpen(false);
     reset();
-    if(sessionStorage.getItem("manufacturerId")) sessionStorage.removeItem("manufacturerId");
+    if (sessionStorage.getItem("manufacturerId")) sessionStorage.removeItem("manufacturerId");
   }
 
   return (
@@ -168,7 +158,7 @@ export function Brands() {
         <div className="p-4">
           <div>
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-gray-700">Manufacturers</h1>
+              <h1 className="text-xl font-bold text-gray-700">Brands</h1>
               <AlertDialog open={open} onOpenChange={() => brandForm.reset()}>
                 <AlertDialogTrigger asChild onClick={() => setOpen(true)}>
                   <Button>New</Button>
