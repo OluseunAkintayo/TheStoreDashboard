@@ -5,6 +5,7 @@ export interface ICategoryResponse {
 }
 
 export interface ICategory {
+  categoryId: string;
   categoryName: string;
   description: string;
   isActive?: boolean,

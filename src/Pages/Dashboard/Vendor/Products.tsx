@@ -44,27 +44,28 @@ import { Loader } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { IBrandResponse } from "@/lib/types/IBrand";
-import { IManufacturerResponse } from "@/lib/types/IManufacturer";
 import { cn } from "@/lib/utils";
 import ProductList from "@/components/Dashboard/ProductList";
 import { IProductResponse } from "@/lib/types/IProduct";
+import { ICategoryResponse } from "@/lib/types/ICategory";
 
 interface INewProduct {
-  productCode: number;
+  productCode: string;
   productName: string;
+  productDescription: string;
   cost: number;
   price: number;
-  manufacturerId: string;
+  categoryId: string;
   brandId: string;
 }
 
 const schema = yup.object().shape({
-  productCode: yup.number().typeError('Must be a number').required('Product code is required'),
+  productCode: yup.string().required('Product code is required'),
   productName: yup.string().required('Product name is required'),
-  productSummary: yup.string().required('Product summary is required'),
+  productDescription: yup.string().required('Product summary is required'),
   cost: yup.number().typeError('Must be a number').required('Required'),
   price: yup.number().typeError('Must be a number').required('Required'),
-  manufacturerId: yup.string().required('Manufacturer is required'),
+  categoryId: yup.string().required('Category is required'),
   brandId: yup.string().required('Brand is required')
 });
 
@@ -73,8 +74,8 @@ export default function Products() {
   const [page,] = React.useState(1);
   const [loading, setLoading] = React.useState<boolean>(false);
   const [open, setOpen] = React.useState<boolean>(false);
-  const [openManufacturerMenu, setOpenManufacturerMenu] = React.useState<boolean>(false);
   const [openBrandMenu, setOpenBrandMenu] = React.useState<boolean>(false);
+  const [openCategoryMenu, setOpenCategoryMenu] = React.useState<boolean>(false);
   const token = sessionStorage.getItem('command');
 
   const productForm = useForm({ resolver: yupResolver(schema) });
@@ -121,28 +122,27 @@ export default function Products() {
   });
   const brands = brandsQuery.data;
 
-  const manufacturersQuery = useQuery({
-    queryKey: ['manufacturers', page],
+  const categoriesQuery = useQuery({
+    queryKey: ['categories', page],
     queryFn: async () => {
       const options: AxiosRequestConfig = {
-        url: "products/manufacturer/list",
+        url: "products/categories/list",
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`
         }
       }
       const res = await axios.request(options);
-      const data: IManufacturerResponse = res.data;
+      const data: ICategoryResponse = res.data;
       return data;
     },
     placeholderData: keepPreviousData,
     refetchInterval: 300000
   });
-  const manufacturers = manufacturersQuery.data;
+  const categories = categoriesQuery.data;
 
   const submit: SubmitHandler<INewProduct> = async (values) => {
-    console.log(values);
-    return;
+    // console.log(values);
     setLoading(true);
     const options: AxiosRequestConfig = {
       url: "products/new",
@@ -150,19 +150,24 @@ export default function Products() {
       headers: {
         Authorization: `Bearer ${token}`
       },
-      // data: {}
+      data: {
+        ...values,
+        brandId: sessionStorage.getItem("brandId"),
+        categoryId: sessionStorage.getItem("categoryId")
+      }
     }
+    // console.log(options.data);
+    // return;
     try {
       const res = await axios.request(options);
       if (res.status === 200) {
-        brandsQuery.refetch();
+        productsQuery.refetch();
         setLoading(false);
         setOpen(false);
         reset();
-        sessionStorage.removeItem("manufacturerId");
         toast({
           title: "Success",
-          description: "Brand created successfully"
+          description: "Product created successfully"
         });
       } else {
         toast({
@@ -172,6 +177,7 @@ export default function Products() {
         });
       }
     } catch (error) {
+      console.log({ error });
       setLoading(false);
       toast({
         variant: "destructive",
@@ -184,17 +190,24 @@ export default function Products() {
   const onClose = () => {
     setOpen(false);
     reset();
-    // if(sessionStorage.getItem("manufacturerId")) sessionStorage.removeItem("manufacturerId");
+    if (sessionStorage.getItem("manufacturerId")) sessionStorage.removeItem("manufacturerId");
+    if (sessionStorage.getItem("categoryId")) sessionStorage.removeItem("categoryId");
+    if (sessionStorage.getItem("brandId")) sessionStorage.removeItem("brandId");
   }
 
   function generateProductCode() {
     const randomNumber = Math.floor(Math.random() * 9999999999);
     const result = randomNumber.toString().padStart(10, '0');
-    setValue("productCode", Number(result));
+    setValue("productCode", result);
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  React.useEffect(() => generateProductCode(), []);
+  React.useEffect(() => {
+    generateProductCode();
+    if (sessionStorage.getItem("manufacturerId")) sessionStorage.removeItem("manufacturerId");
+    if (sessionStorage.getItem("categoryId")) sessionStorage.removeItem("categoryId");
+    if (sessionStorage.getItem("brandId")) sessionStorage.removeItem("brandId");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <DBLayout>
@@ -207,7 +220,7 @@ export default function Products() {
                 <AlertDialogTrigger asChild onClick={() => setOpen(true)}>
                   <Button>New</Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="max-h-[80dvh] overflow-y-auto">
                   <AlertDialogHeader>
                     <AlertDialogTitle>New Product</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -235,29 +248,29 @@ export default function Products() {
                       <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.productName?.message}</p>
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="productSummary" className={cn(
+                      <label htmlFor="productDescription" className={cn(
                         "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-                        productErrors.productSummary && "text-destructive"
+                        productErrors.productDescription && "text-destructive"
                       )}>Product Summary</label>
-                      <Textarea placeholder="Enter product summary" id="productSummary" {...register("productSummary")} />
-                      <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.productSummary?.message}</p>
+                      <Textarea placeholder="Enter product summary" id="productDescription" {...register("productDescription")} />
+                      <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.productDescription?.message}</p>
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="manufacturerId" className={cn(
+                      <label htmlFor="categoryId" className={cn(
                         "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-                        productErrors.manufacturerId && "text-destructive"
-                      )}>Manufacturer</label>
-                      <Popover open={openManufacturerMenu} onOpenChange={setOpenManufacturerMenu}>
+                        productErrors.categoryId && "text-destructive"
+                      )}>Product Category</label>
+                      <Popover open={openCategoryMenu} onOpenChange={setOpenCategoryMenu}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
                             role="combobox"
-                            aria-expanded={openManufacturerMenu}
+                            aria-expanded={openCategoryMenu}
                             className="w-full justify-between"
                           >
-                            {(watch(["manufacturerId"])[0] && !manufacturersQuery.isError && manufacturers?.data)
-                              ? manufacturers.data.find((item) => item.manufacturerName === watch(["manufacturerId"])[0])?.manufacturerName
-                              : "Select manufacturer"}
+                            {(watch(["categoryId"])[0] && !categoriesQuery.isError && categories?.data)
+                              ? categories.data.find((item) => item.categoryName === watch(["categoryId"])[0])?.categoryName
+                              : "Select category"}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
@@ -265,25 +278,25 @@ export default function Products() {
                           <Command>
                             <CommandInput placeholder="Search..." />
                             <CommandList>
-                              <CommandEmpty>No manufacturer found.</CommandEmpty>
+                              <CommandEmpty>No items found.</CommandEmpty>
                               <CommandGroup>
-                                {(!manufacturersQuery.isError && manufacturers?.data) && manufacturers.data.map((manufacturer) => (
+                                {(!categoriesQuery.isError && categories?.data) && categories.data.map((category) => (
                                   <CommandItem
-                                    key={manufacturer.id}
-                                    value={manufacturer.manufacturerName}
+                                    key={category.categoryId}
+                                    value={category.categoryName}
                                     onSelect={(currentValue) => {
-                                      setValue("manufacturerId", currentValue);
-                                      sessionStorage.setItem('manufacturerId', manufacturer.id);
-                                      setOpenManufacturerMenu(false);
+                                      setValue("categoryId", currentValue);
+                                      sessionStorage.setItem('categoryId', category.categoryId);
+                                      setOpenCategoryMenu(false);
                                     }}
                                   >
                                     <Check
                                       className={cn(
                                         "mr-2 h-4 w-4",
-                                        watch(["manufacturerId"])[0] === manufacturer.manufacturerName ? "opacity-100" : "opacity-0"
+                                        watch(["categoryId"])[0] === category.categoryName ? "opacity-100" : "opacity-0"
                                       )}
                                     />
-                                    {manufacturer.manufacturerName}
+                                    {category.categoryName}
                                   </CommandItem>
                                 ))}
                               </CommandGroup>
@@ -291,10 +304,10 @@ export default function Products() {
                           </Command>
                         </PopoverContent>
                       </Popover>
-                      <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.manufacturerId?.message}</p>
+                      <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.categoryId?.message}</p>
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="manufacturerId" className={cn(
+                      <label htmlFor="brandId" className={cn(
                         "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
                         productErrors.brandId && "text-destructive"
                       )}>Brand</label>
@@ -306,7 +319,7 @@ export default function Products() {
                             aria-expanded={openBrandMenu}
                             className="w-full justify-between"
                           >
-                            {(watch(["manufacturerId"])[0] && !brandsQuery.isError && brands?.data)
+                            {(watch(["brandId"])[0] && !brandsQuery.isError && brands?.data)
                               ? brands.data.find((item) => item.brandName === watch(["brandId"])[0])?.brandName
                               : "Select brand"}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -323,7 +336,6 @@ export default function Products() {
                                     key={brand.brandId}
                                     value={brand.brandName}
                                     onSelect={(currentValue) => {
-                                      console.log(currentValue);
                                       setValue("brandId", currentValue);
                                       sessionStorage.setItem('brandId', brand.brandId);
                                       setOpenBrandMenu(false);
@@ -343,7 +355,7 @@ export default function Products() {
                           </Command>
                         </PopoverContent>
                       </Popover>
-                      <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.manufacturerId?.message}</p>
+                      <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.brandId?.message}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">

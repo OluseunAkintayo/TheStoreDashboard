@@ -1,49 +1,80 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import dayjs from "dayjs";
-import { Eye } from "lucide-react";
+import { ArrowBigUpDash, Edit, EllipsisVertical, Trash2 } from "lucide-react";
 import { IProduct } from "@/lib/types/IProduct";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import React from "react";
+import { EditProductModal } from "./Products/EditProductModal";
+import { UpdateStockModal } from "./Products/UpdateStockModal";
 
 interface IProductList {
   data: IProduct[];
 }
 
 export default function ProductList({ data }: IProductList) {
+  const [openEditModal, setOpenEditModal] = React.useState<boolean>(false);
+  const [openUpdateStockModal, setUpdateStockModal] = React.useState<boolean>(false);
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Product Name</TableHead>
-          <TableHead>Brand</TableHead>
-          <TableHead>Category</TableHead>
-          <TableHead>Avail. Qty</TableHead>
-          <TableHead>Cost</TableHead>
-          <TableHead>Price</TableHead>
-          <TableHead>Date Created</TableHead>
-          <TableHead className="text-center">Action</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {
-          data.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell className="py-2">{item.productName}</TableCell>
-              <TableCell className="py-2">{item.brandId}</TableCell>
-              <TableCell className="py-2">{item.categoryId}</TableCell>
-              <TableCell className="py-2">2</TableCell>
-              <TableCell className="py-2">{item.cost}</TableCell>
-              <TableCell className="py-2">{item.price}</TableCell>
-              <TableCell className="py-2">{dayjs(item.createdAt).format("D MMM YYYY")}</TableCell>
-              <TableCell className="grid place-items-center py-2">
-                <button className="grid place-items-center bg-accent w-8 h-8 rounded-full hover:bg-gray-200">
-                  <Eye className="text-gray-500 w-5 h-5" />
-                </button>
-              </TableCell>
-            </TableRow>
-          ))
-        }
-      </TableBody>
-    </Table>
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Product Name</TableHead>
+            <TableHead>Brand</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Avail. Qty</TableHead>
+            <TableHead className="text-right">Cost</TableHead>
+            <TableHead className="text-right">Price</TableHead>
+            <TableHead className="text-center">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {
+            data.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell className="py-2">{item.productName}</TableCell>
+                <TableCell className="py-2">{item.brandId}</TableCell>
+                <TableCell className="py-2">{item.categoryId}</TableCell>
+                <TableCell className="py-2">2</TableCell>
+                <TableCell className="py-2 text-right">{item.cost}</TableCell>
+                <TableCell className="py-2 text-right">{item.price}</TableCell>
+                <TableCell className="grid place-items-center py-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="bg-accent w-8 h-8 rounded-full hover:bg-gray-200 grid place-items-center">
+                      <EllipsisVertical className="text-gray-500 w-5 h-5" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setOpenEditModal(true)}>
+                        <Edit className="w-4" />
+                        <span className="ml-2">Edit Product</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <ArrowBigUpDash className="w-4" />
+                        <span className="ml-2">Update Stock</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Trash2 className="w-4" />
+                        <span className="ml-2">Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))
+          }
+        </TableBody>
+      </Table>
+      {openEditModal && <EditProductModal open={openEditModal} setOpenEditModal={setOpenEditModal} />}
+      {openEditModal && <UpdateStockModal open={openUpdateStockModal} setUpdateStockModal={setUpdateStockModal} />}
+    </>
   )
 }
-
-
