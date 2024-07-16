@@ -42,10 +42,7 @@ export default function Login() {
         sessionStorage.setItem('command', loginData.data.accessToken);
         sessionStorage.setItem('exp', loginData.data.expirationDate);
         sessionStorage.setItem('user', loginData.data.user);
-        console.log(loginData);
-        // navigate({ pathname: "/vendor" });
         navigate("/vendor");
-        console.log('navigate here')
         setLoading(false);
         return;
       }

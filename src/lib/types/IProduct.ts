@@ -21,13 +21,14 @@ export interface IProduct {
 
 export interface INewProduct {
   productCode: string;
-  ProductName: string;
+  productName: string;
+  productDescription: string;
   cost: number;
   price: number;
-  brandId: string;
   categoryId: string;
+  brandId: string;
+  Id?: string;
 }
-
 
 export interface IProductResponse {
   success: boolean;

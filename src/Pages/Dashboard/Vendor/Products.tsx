@@ -1,6 +1,6 @@
 import DBLayout from "@components/Dashboard/DBLayout";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import React from "react";
 import { RotateCcw } from 'lucide-react';
 import {
@@ -45,19 +45,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { IBrandResponse } from "@/lib/types/IBrand";
 import { cn } from "@/lib/utils";
-import ProductList from "@/components/Dashboard/ProductList";
-import { IProductResponse } from "@/lib/types/IProduct";
+import { INewProduct, IProductResponse } from "@/lib/types/IProduct";
 import { ICategoryResponse } from "@/lib/types/ICategory";
-
-interface INewProduct {
-  productCode: string;
-  productName: string;
-  productDescription: string;
-  cost: number;
-  price: number;
-  categoryId: string;
-  brandId: string;
-}
+import ProductList from "@/components/Dashboard/Products/ProductList";
 
 const schema = yup.object().shape({
   productCode: yup.string().required('Product code is required'),
@@ -100,7 +90,6 @@ export default function Products() {
     placeholderData: keepPreviousData,
     refetchInterval: 30000
   });
-
   const products = productsQuery.data;
 
   const brandsQuery = useQuery({
@@ -121,6 +110,7 @@ export default function Products() {
     refetchInterval: 300000
   });
   const brands = brandsQuery.data;
+  const brandsQueryError = brandsQuery.error as AxiosError;
 
   const categoriesQuery = useQuery({
     queryKey: ['categories', page],
@@ -142,7 +132,6 @@ export default function Products() {
   const categories = categoriesQuery.data;
 
   const submit: SubmitHandler<INewProduct> = async (values) => {
-    // console.log(values);
     setLoading(true);
     const options: AxiosRequestConfig = {
       url: "products/new",
@@ -156,8 +145,6 @@ export default function Products() {
         categoryId: sessionStorage.getItem("categoryId")
       }
     }
-    // console.log(options.data);
-    // return;
     try {
       const res = await axios.request(options);
       if (res.status === 200) {
@@ -425,7 +412,7 @@ export default function Products() {
             {
               (productsQuery.isError) && (
                 <div className="p-4">
-                  <p className="text-red-600 text-wrap break-words">{JSON.stringify(brandsQuery.error, null, 2)}</p>
+                  <p className="text-red-600 text-wrap break-words">Error {brandsQueryError.status + ": " + brandsQueryError.response?.statusText}</p>
                 </div>
               )
             }

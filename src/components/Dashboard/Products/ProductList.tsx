@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@components/ui/table";
 import { ArrowBigUpDash, Edit, EllipsisVertical, Trash2 } from "lucide-react";
 import { IProduct } from "@/lib/types/IProduct";
 import {
@@ -10,8 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import React from "react";
-import { EditProductModal } from "./Products/EditProductModal";
-import { UpdateStockModal } from "./Products/UpdateStockModal";
+import { EditProductModal } from "@components/Dashboard/Products/EditProductModal";
+import { UpdateStockModal } from "@components/Dashboard/Products/UpdateStockModal";
 
 interface IProductList {
   data: IProduct[];
@@ -20,6 +20,7 @@ interface IProductList {
 export default function ProductList({ data }: IProductList) {
   const [openEditModal, setOpenEditModal] = React.useState<boolean>(false);
   const [openUpdateStockModal, setUpdateStockModal] = React.useState<boolean>(false);
+  const [product, setProduct] = React.useState<IProduct | null>(null);
 
   return (
     <>
@@ -43,8 +44,8 @@ export default function ProductList({ data }: IProductList) {
                 <TableCell className="py-2">{item.brandId}</TableCell>
                 <TableCell className="py-2">{item.categoryId}</TableCell>
                 <TableCell className="py-2">2</TableCell>
-                <TableCell className="py-2 text-right">{item.cost}</TableCell>
-                <TableCell className="py-2 text-right">{item.price}</TableCell>
+                <TableCell className="py-2 text-right">{item.cost.toLocaleString()}</TableCell>
+                <TableCell className="py-2 text-right">{item.price.toLocaleString()}</TableCell>
                 <TableCell className="grid place-items-center py-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger className="bg-accent w-8 h-8 rounded-full hover:bg-gray-200 grid place-items-center">
@@ -53,7 +54,10 @@ export default function ProductList({ data }: IProductList) {
                     <DropdownMenuContent>
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => setOpenEditModal(true)}>
+                      <DropdownMenuItem onClick={() => {
+                        setOpenEditModal(true);
+                        setProduct(item);
+                      }}>
                         <Edit className="w-4" />
                         <span className="ml-2">Edit Product</span>
                       </DropdownMenuItem>
@@ -73,7 +77,7 @@ export default function ProductList({ data }: IProductList) {
           }
         </TableBody>
       </Table>
-      {openEditModal && <EditProductModal open={openEditModal} setOpenEditModal={setOpenEditModal} />}
+      {openEditModal && <EditProductModal open={openEditModal} product={product} setOpenEditModal={setOpenEditModal} />}
       {openEditModal && <UpdateStockModal open={openUpdateStockModal} setUpdateStockModal={setUpdateStockModal} />}
     </>
   )

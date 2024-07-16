@@ -1,7 +1,7 @@
 import React from "react";
 import DBLayout from "@components/Dashboard/DBLayout";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import {
   Table,
   TableBody,
@@ -29,7 +29,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { ICategory, ICategoryResponse } from "@/lib/types/ICategory";
-import CategoryList from "@/components/Dashboard/CategoryList";
+import CategoryList from "@/components/Dashboard/Categories/CategoryList";
+import { Link } from "react-router-dom";
 
 const schema = yup.object().shape({
   categoryName: yup.string().required('Category name is required'),
@@ -64,6 +65,8 @@ export function Categories() {
     refetchInterval: 300000
   });
 
+  const categoriesQueryError = categoriesQuery.error as AxiosError;
+
   const submit: SubmitHandler<ICategory> = async (values) => {
     setLoading(true);
     const options: AxiosRequestConfig = {
@@ -83,7 +86,7 @@ export function Categories() {
         reset();
         toast({
           title: "Success",
-          description: "Product category created successfully"
+          description: "Product category updated successfully"
         });
       } else {
         toast({
@@ -113,7 +116,7 @@ export function Categories() {
         <div className="p-4">
           <div>
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-gray-700">Brands</h1>
+              <h1 className="text-xl font-bold text-gray-700">Categories</h1>
               <AlertDialog open={open} onOpenChange={() => categoryForm.reset()}>
                 <AlertDialogTrigger asChild onClick={() => setOpen(true)}>
                   <Button>New</Button>
@@ -181,17 +184,18 @@ export function Categories() {
             }
           </React.Fragment>
           <React.Fragment>
-            {
-              (categoriesQuery.isError) && (
-                <div className="p-4">
-                  <p className="text-red-600 text-wrap break-words">{JSON.stringify(categoriesQuery.error, null, 2)}</p>
-                </div>
+            {categoriesQuery.isError && (
+              categoriesQueryError.response?.status === 401 ?
+                (<div className="p-4"><p className="text-red-600 text-wrap break-words">Error {categoriesQueryError.response?.status}: your current session has expired. Click <Link className="text-gray-500" to="/auth/login">here</Link> to login again.</p></div>)
+                :
+                (<div className="p-4"><p className="text-red-600 text-wrap break-words">Error {categoriesQueryError.response?.status}: {categoriesQueryError.response?.statusText}</p></div>
+                )
               )
             }
           </React.Fragment>
           <React.Fragment>
             {
-              (!categoriesQuery.isError && categoriesQuery.data && categoriesQuery.data.success) && <CategoryList data={categoriesQuery.data.data} />
+              (!categoriesQuery.isError && categoriesQuery.data && categoriesQuery.data.data) && <CategoryList data={categoriesQuery.data.data} refetch={categoriesQuery.refetch} />
             }
           </React.Fragment>
         </div>
