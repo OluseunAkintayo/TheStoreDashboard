@@ -3,10 +3,7 @@ export interface IProduct {
   productCode: string;
   productName: string;
   producDescription: string;
-  picture?: {
-    fileName: string;
-    fileSrc: string;
-  };
+  picture?: Array<string>;
   isActive: boolean;
   cost: number;
   price: number;
@@ -26,8 +23,8 @@ export interface INewProduct {
   cost: number;
   price: number;
   categoryId: string;
+  pictures?: Array<string>;
   brandId: string;
-  Id?: string;
 }
 
 export interface IProductResponse {

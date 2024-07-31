@@ -42,7 +42,7 @@ export default function Login() {
         sessionStorage.setItem('command', loginData.data.accessToken);
         sessionStorage.setItem('exp', loginData.data.expirationDate);
         sessionStorage.setItem('user', loginData.data.user);
-        navigate("/vendor");
+        navigate("/admin");
         setLoading(false);
         return;
       }

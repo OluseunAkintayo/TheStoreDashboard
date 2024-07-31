@@ -143,8 +143,8 @@ export function Manufacturers() {
                         )}
                       />
                       <AlertDialogFooter className="mt-8">
-                        <AlertDialogCancel disabled={loading} className="w-full" onClick={() => setOpen(false)}>Cancel</AlertDialogCancel>
                         <AlertDialogAction type="submit" disabled={loading} className="w-full">{loading ? <span className="animate-spin"><Loader /></span> : "Save"}</AlertDialogAction>
+                        <AlertDialogCancel disabled={loading} className="w-full" onClick={() => setOpen(false)}>Cancel</AlertDialogCancel>
                       </AlertDialogFooter>
                     </form>
                   </Form>

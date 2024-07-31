@@ -32,6 +32,8 @@ import { ICategory, ICategoryResponse } from "@/lib/types/ICategory";
 import CategoryList from "@/components/Dashboard/Categories/CategoryList";
 import { Link } from "react-router-dom";
 
+type TNewcategory = Omit<ICategory, "categoryId">;
+
 const schema = yup.object().shape({
   categoryName: yup.string().required('Category name is required'),
   description: yup.string().required('Description is required')
@@ -67,7 +69,7 @@ export function Categories() {
 
   const categoriesQueryError = categoriesQuery.error as AxiosError;
 
-  const submit: SubmitHandler<ICategory> = async (values) => {
+  const submit: SubmitHandler<TNewcategory> = async (values) => {
     setLoading(true);
     const options: AxiosRequestConfig = {
       url: "products/categories/new",
@@ -134,7 +136,7 @@ export function Categories() {
                         "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
                         categoryErrors.categoryName && "text-destructive"
                       )}>Category Name</label>
-                      <Input placeholder="Enter category name" id="categoryName" {...register("categoryName")} />
+                      <Input autoFocus placeholder="Enter category name" id="categoryName" {...register("categoryName")} />
                       <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{categoryErrors.categoryName?.message}</p>
                     </div>
                     <div className="space-y-2">

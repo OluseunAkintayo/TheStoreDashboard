@@ -19,7 +19,6 @@ import ProductList from "@/components/Dashboard/Products/ProductList";
 import { Button } from "@/components/ui/button";
 import { NewProduct } from "@/components/Dashboard/Products/NewProduct";
 
-
 export default function Products() {
   const [page,] = React.useState(1);
   const [newProductModal, setNewProductModal] = React.useState<boolean>(false);
@@ -43,9 +42,10 @@ export default function Products() {
     queryKey: ['products'],
     queryFn: getProducts,
     placeholderData: keepPreviousData,
-    refetchInterval: 30000
+    // refetchInterval: 30000
   });
   const products = productsQuery.data;
+  const productQueryError  = productsQuery.error as AxiosError;
 
   const brandsQuery = useQuery({
     queryKey: ['brands', page],
@@ -64,7 +64,6 @@ export default function Products() {
     placeholderData: keepPreviousData,
     refetchInterval: 300000
   });
-  const brandsQueryError = brandsQuery.error as AxiosError;
 
   const categoriesQuery = useQuery({
     queryKey: ['categories', page],
@@ -142,7 +141,7 @@ export default function Products() {
             {
               (productsQuery.isError) && (
                 <div className="p-4">
-                  <p className="text-red-600 text-wrap break-words">Error {brandsQueryError.status + ": " + brandsQueryError.response?.statusText}</p>
+                  <p className="text-red-600 text-wrap break-words">Error {productQueryError?.response?.status + ": " + productQueryError?.response?.data}</p>
                 </div>
               )
             }

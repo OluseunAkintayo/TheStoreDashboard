@@ -37,7 +37,7 @@ export default function DashboardHeader() {
                 <MenubarSeparator />
                 <MenubarItem className="flex gap-2">
                   <Settings className="scale-75" />
-                  <Link className="w-full" to="/vendor/edit-profile">Edit Profile</Link>
+                  <Link className="w-full" to="/profile/edit-profile">Edit Profile</Link>
                 </MenubarItem>
                 <MenubarSeparator />
                 <MenubarItem className="flex gap-2" onClick={() => sessionStorage.clear()}>
