@@ -121,15 +121,13 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // console.log(watch());
-
-  const [imagesUrl, setImagesUrl] = React.useState<Array<string>>([]);
-  const [fileNames, setFileNames] = React.useState<Array<string>>([]);
-  const onFileUpLoad = async (e: ChangeEvent<HTMLInputElement>) => {
+  // console.log(watch("productCode"));
+  const [images, setImages] = React.useState<{ fileNames: Array<string>, tempUris: Array<string>, imgUris: Array<string> }>({ fileNames: [], tempUris: [], imgUris: [] });
+  const onFileUpLoad = async (e: ChangeEvent<HTMLInputElement>, productId: string) => {
     const files = e.target.files;
     if (files) {
       for (const file of files) {
-        if (!fileNames.includes(file.name)) {
+        if (!images.fileNames.includes(file.name)) {
           new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -137,10 +135,16 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
             reader.onerror = (error) => reject(error);
           }).then((item) => {
             const url = item as string;
-            setImagesUrl(prev => (prev.concat([url])));
-            setFileNames(prev => (prev.concat([file.name])));
+            setImages(prev => ({ ...prev, tempUris: prev.tempUris.concat([url]), fileNames: prev.fileNames.concat([file.name]) }));
+            const uploadUrl: string = `products/file/upload/${productId}`
+            const formData = new FormData();
+            formData.append("files", file);
+            axios.post(uploadUrl, formData, {}).then(res => {
+              console.log(res);
+            });
           }).catch(error => {
             console.log(error);
+            throw new Error(error);
           });
         }
       }
@@ -148,9 +152,7 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
   }
 
   React.useEffect(() => {
-    console.log({ imagesUrl });
-    // console.log({ fileNames });
-  }, [imagesUrl, fileNames]);
+  }, [images]);
 
   return (
     <AlertDialog open={open}>
@@ -318,20 +320,20 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
                   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
                   productErrors.pictures && "text-destructive")}>Product Images</label>
                 <Input className='' type='file' id="pictures" accept=".jpg, .jpeg, .png, .webp" multiple {...register("pictures", {
-                  onChange: onFileUpLoad
+                  onChange: (e) => onFileUpLoad(e, watch("productCode"))
                 })} />
                 <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.pictures?.message}</p>
               </div>
             </div>
             <div className='sm:px-10 mt-4 sm:mt-0'>
               {
-                (imagesUrl && imagesUrl.length > 0) ? (
+                (images.tempUris && images.tempUris.length > 0) ? (
                   <Carousel>
                     <CarouselContent>
                       {
-                        imagesUrl.map((item, i) => (
-                          <CarouselItem key={i}>
-                            <img src={item} alt="" className='h-full object-cover' />
+                        images.tempUris.map((item, i) => (
+                          <CarouselItem key={i} className='grid place-items-center'>
+                            <img src={item} alt="" className='w-[90%] mx-auto' />
                           </CarouselItem>
                         ))
                       }
@@ -341,7 +343,6 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
                   </Carousel>
                 ) : (
                   <div className='bg-accent p-4 h-full grid place-items-center'>
-                    {/* <img src={placeholder} alt="placeholder" /> */}
                     <h4 className='text-2xl font-semibold'>Upload product image</h4>
                   </div>
                 )
