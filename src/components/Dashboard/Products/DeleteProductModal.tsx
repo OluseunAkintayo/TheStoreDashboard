@@ -1,34 +1,90 @@
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
+import { IProduct } from "@/lib/types/IProduct";
+import { AlertDialogDescription } from "@radix-ui/react-alert-dialog";
+import axios, { AxiosRequestConfig } from "axios";
+import { Loader, TriangleAlert, X } from "lucide-react";
+import React from "react";
 
-interface IEditProductModal {
-  setOpenEditModal: (arg0: boolean) => void;
+interface IDeleteProductModal {
+  setDeleteModal: (arg0: boolean) => void;
+  setProduct: (arg0: IProduct | null) => void;
   open: boolean;
+  product?: IProduct | null;
+  refetch: () => void;
 }
 
-export function DeleteProductModal({ open, setOpenEditModal }: IEditProductModal) {
+export function DeleteProductModal({ open, setDeleteModal, product, setProduct, refetch }: IDeleteProductModal) {
+  const close = () => {
+    setDeleteModal(false);
+    setProduct(null);
+  }
+
+  const [loading, setLoading] = React.useState<boolean>(false);
+
+  const submit = async () => {
+    setLoading(true);
+    const options: AxiosRequestConfig = {
+      url: `products/categories/delete/${product?.id}`,
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem('command')}`
+      }
+    }
+    try {
+      const res = await axios.request(options);
+      if (res.status === 200) {
+        toast({
+          title: "Success",
+          description: "Product deleted"
+        });
+        setLoading(false);
+        close();
+        refetch();
+        return;
+      }
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Unable to complete request at this time."
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Server Error",
+        description: "An error has occurred on the server"
+      });
+    }
+  }
+
   return (
-    <AlertDialog open={open} onOpenChange={setOpenEditModal}>
+    <AlertDialog open={open} onOpenChange={close}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your account
-            and remove your data from our servers.
+          <AlertDialogTitle>
+            Delete item '{product?.productName}'
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-red-600 text-lg flex items-center gap-3 py-3">
+            <TriangleAlert />
+            This action is irreversible
           </AlertDialogDescription>
+          <span
+            className="absolute top-4 right-4 bg-accent w-6 h-6 grid place-items-center rounded-full cursor-pointer"
+            onClick={close}
+          >
+            <X className="w-4 h-4" />
+          </span>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction>Continue</AlertDialogAction>
-        </AlertDialogFooter>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Button disabled={loading} onClick={submit} className="bg-red-600 hover:bg-red-700">{loading ? <span className="animate-spin"><Loader /></span> : "Delete"}</Button>
+          <Button disabled={loading} variant="outline" onClick={close}>Cancel</Button>
+        </div>
       </AlertDialogContent>
     </AlertDialog>
   )

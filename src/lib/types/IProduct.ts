@@ -2,28 +2,30 @@ export interface IProduct {
   id: string;
   productCode: string;
   productName: string;
-  producDescription: string;
-  picture?: Array<string>;
-  isActive: boolean;
+  productDescription: string;
   cost: number;
   price: number;
-  stockId?: string;
+  stockId: string;
+  quantity: number;
+  reorderLevel: number;
   brandId: string;
+  brandName: string;
   categoryId: string;
-  createdAt: string;
-  createdBy: string;
+  categoryName: string;
+  pictures?: Array<string>;
+  isActive: boolean;
+  createdBy?: string;
   modifiedAt?: string;
-  modifiedBy?: string;
 }
 
 export interface INewProduct {
   productCode: string;
   productName: string;
-  productDescription: string;
+  description: string;
   cost: number;
   price: number;
   categoryId: string;
-  pictures?: Array<string>;
+  pictures: Array<string | undefined>;
   brandId: string;
 }
 
@@ -31,4 +33,10 @@ export interface IProductResponse {
   success: boolean;
   message: string;
   data: Array<IProduct>;
+}
+
+export interface IUploadResponse {
+  success: boolean,
+  message: string,
+  pictureUri: Array<string>
 }

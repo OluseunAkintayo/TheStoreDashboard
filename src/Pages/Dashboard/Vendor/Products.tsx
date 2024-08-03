@@ -27,7 +27,7 @@ export default function Products() {
 
   const getProducts = async () => {
     const options: AxiosRequestConfig = {
-      url: "products/list",
+      url: "products/admin-products",
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`
@@ -39,7 +39,7 @@ export default function Products() {
   }
 
   const productsQuery = useQuery({
-    queryKey: ['products'],
+    queryKey: ['admin-products'],
     queryFn: getProducts,
     placeholderData: keepPreviousData,
     // refetchInterval: 30000
@@ -147,12 +147,8 @@ export default function Products() {
             }
           </React.Fragment>
           <React.Fragment>
-            {
-              (!productsQuery.isError && productsQuery.data && products?.success) && <ProductList data={products.data} />
-            }
-            {
-              newProductModal && <NewProduct open={newProductModal} onClose={onClose} refetch={productsQuery.refetch} categoriesQuery={categoriesQuery} brandsQuery={brandsQuery} />
-            }
+            {(!productsQuery.isError && productsQuery.data && products?.success) && <ProductList data={products.data} refetch={productsQuery.refetch} brandsQuery={brandsQuery} categoriesQuery={categoriesQuery} />}
+            {newProductModal && <NewProduct open={newProductModal} onClose={onClose} refetch={productsQuery.refetch} categoriesQuery={categoriesQuery} brandsQuery={brandsQuery} />}
           </React.Fragment>
         </div>
       </section>

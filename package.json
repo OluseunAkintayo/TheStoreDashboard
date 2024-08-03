@@ -31,6 +31,7 @@
     "cmdk": "^1.0.0",
     "dayjs": "^1.11.11",
     "embla-carousel-react": "^8.1.8",
+    "firebase": "^10.12.5",
     "lucide-react": "^0.416.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

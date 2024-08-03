@@ -1,4 +1,4 @@
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, X } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea"
 import {
   Command,
@@ -36,6 +36,10 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import { Label } from '@/components/ui/label';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/lib/firebase';
+import { IconButton } from '@/components/ui/icon-button';
 
 
 interface INewProductModal {
@@ -45,20 +49,20 @@ interface INewProductModal {
   categoriesQuery: UseQueryResult<ICategoryResponse, Error>
   brandsQuery: UseQueryResult<IBrandResponse, Error>
 }
+const schema = yup.object().shape({
+  productCode: yup.string().required('Product code is required'),
+  productName: yup.string().required('Product name is required'),
+  description: yup.string().required('Product summary is required'),
+  cost: yup.number().typeError('Must be a number').required('Required'),
+  price: yup.number().typeError('Must be a number').required('Required'),
+  categoryId: yup.string().required('Category is required'),
+  brandId: yup.string().required('Brand is required'),
+  pictures: yup.array().typeError("Must be an array").of(yup.string()).min(1, 'At least one image must be added').required("Required")
+});
 
 
 export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuery }: INewProductModal) {
   const token = sessionStorage.getItem("command");
-  const schema = yup.object().shape({
-    productCode: yup.string().required('Product code is required'),
-    productName: yup.string().required('Product name is required'),
-    productDescription: yup.string().required('Product summary is required'),
-    cost: yup.number().typeError('Must be a number').required('Required'),
-    price: yup.number().typeError('Must be a number').required('Required'),
-    categoryId: yup.string().required('Category is required'),
-    brandId: yup.string().required('Brand is required'),
-    pictures: yup.array().min(1, 'At least one image must be added').required("Required")
-  });
   const productForm = useForm({ resolver: yupResolver(schema) });
   const { handleSubmit, register, reset, setValue, watch, formState: { errors: productErrors } } = productForm;
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -67,6 +71,7 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
 
   const submit: SubmitHandler<INewProduct> = async (values) => {
     setLoading(true);
+
     const options: AxiosRequestConfig = {
       url: "products/new",
       method: "POST",
@@ -115,15 +120,15 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
 
   React.useEffect(() => {
     generateProductCode();
+    setValue("pictures", []);
     if (sessionStorage.getItem("manufacturerId")) sessionStorage.removeItem("manufacturerId");
     if (sessionStorage.getItem("categoryId")) sessionStorage.removeItem("categoryId");
     if (sessionStorage.getItem("brandId")) sessionStorage.removeItem("brandId");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // console.log(watch("productCode"));
   const [images, setImages] = React.useState<{ fileNames: Array<string>, tempUris: Array<string>, imgUris: Array<string> }>({ fileNames: [], tempUris: [], imgUris: [] });
-  const onFileUpLoad = async (e: ChangeEvent<HTMLInputElement>, productId: string) => {
+  const onFileUpLoad = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       for (const file of files) {
@@ -136,29 +141,35 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
           }).then((item) => {
             const url = item as string;
             setImages(prev => ({ ...prev, tempUris: prev.tempUris.concat([url]), fileNames: prev.fileNames.concat([file.name]) }));
-            const uploadUrl: string = `products/file/upload/${productId}`
-            const formData = new FormData();
-            formData.append("files", file);
-            axios.post(uploadUrl, formData, {}).then(res => {
-              console.log(res);
-            });
           }).catch(error => {
             console.log(error);
             throw new Error(error);
           });
+          const storageRef = ref(storage, `thestore/${file.name}`);
+          uploadBytes(storageRef, file)
+            .then(item => {
+              return getDownloadURL(item.ref);
+            })
+            .then(uri => {
+              setImages(prev => ({ ...prev, imgUris: prev.imgUris.concat([uri]) }));
+            })
+            .catch(error => {
+              console.log({ uploadError: error });
+            });
         }
       }
     }
   }
 
   React.useEffect(() => {
-  }, [images]);
+    setValue("pictures", images.imgUris);
+  }, [images.imgUris]);
 
   return (
     <AlertDialog open={open}>
       <AlertDialogContent className="max-h-[80dvh] overflow-y-auto max-w-[1440px]">
         <AlertDialogHeader className='relative'>
-          {/* <IconButton className='absolute right-0'><X className='w-5 h-5' /></IconButton> */}
+          <IconButton className='absolute right-0' onClick={onClose}><X className='w-5 h-5' /></IconButton>
           <AlertDialogTitle>New Product</AlertDialogTitle>
           <AlertDialogDescription>
             Adds a new product
@@ -168,37 +179,37 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <div>
               <div className="space-y-2">
-                <label htmlFor="productCode" className={cn(
+                <Label htmlFor="productCode" className={cn(
                   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
                   productErrors.productCode && "text-destructive"
-                )}>Product Code</label>
+                )}>Product Code</Label>
                 <div className="relative">
-                  <Input placeholder="Enter product code" id="productCode" {...register("productCode")} />
+                  <Input placeholder="Enter product code" disabled id="productCode" {...register("productCode")} />
                   <button title="Generate code" type="button" onClick={generateProductCode} className="bg-accent w-8 h-8 rounded-full grid place-items-center absolute right-2 top-1"><RotateCcw className="text-gray-700 w-4 h-4" /></button>
                 </div>
                 <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.productCode?.message}</p>
               </div>
               <div className="space-y-2">
-                <label htmlFor="productName" className={cn(
+                <Label htmlFor="productName" className={cn(
                   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
                   productErrors.productName && "text-destructive"
-                )}>Product Name</label>
+                )}>Product Name</Label>
                 <Input placeholder="Enter product name" id="productName" {...register("productName")} />
                 <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.productName?.message}</p>
               </div>
               <div className="space-y-2">
-                <label htmlFor="productDescription" className={cn(
+                <Label htmlFor="productDescription" className={cn(
                   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-                  productErrors.productDescription && "text-destructive"
-                )}>Product Summary</label>
-                <Textarea placeholder="Enter product summary" id="productDescription" {...register("productDescription")} />
-                <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.productDescription?.message}</p>
+                  productErrors.description && "text-destructive"
+                )}>Product Summary</Label>
+                <Textarea placeholder="Enter product summary" id="productDescription" {...register("description")} />
+                <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.description?.message}</p>
               </div>
               <div className="space-y-2">
-                <label htmlFor="categoryId" className={cn(
+                <Label htmlFor="categoryId" className={cn(
                   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
                   productErrors.categoryId && "text-destructive"
-                )}>Product Category</label>
+                )}>Product Category</Label>
                 <Popover open={openCategoryMenu} onOpenChange={setOpenCategoryMenu}>
                   <PopoverTrigger asChild>
                     <Button
@@ -224,7 +235,6 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
                               key={category.categoryId}
                               value={category.categoryName}
                               onSelect={(currentValue) => {
-                                console.log({ currentValue, category });
                                 setValue("categoryId", currentValue);
                                 sessionStorage.setItem('categoryId', category?.categoryId);
                                 setOpenCategoryMenu(false);
@@ -247,10 +257,10 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
                 <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.categoryId?.message}</p>
               </div>
               <div className="space-y-2">
-                <label htmlFor="brandId" className={cn(
+                <Label htmlFor="brandId" className={cn(
                   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
                   productErrors.brandId && "text-destructive"
-                )}>Brand</label>
+                )}>Brand</Label>
                 <Popover open={openBrandMenu} onOpenChange={setOpenBrandMenu}>
                   <PopoverTrigger asChild>
                     <Button
@@ -299,29 +309,29 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label htmlFor="cost" className={cn(
+                  <Label htmlFor="cost" className={cn(
                     "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
                     productErrors.cost && "text-destructive"
-                  )}>Product Cost</label>
+                  )}>Product Cost</Label>
                   <Input placeholder="Cost" id="cost" {...register("cost")} />
                   <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.cost?.message}</p>
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="price" className={cn(
+                  <Label htmlFor="price" className={cn(
                     "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
                     productErrors.price && "text-destructive"
-                  )}>Price</label>
+                  )}>Price</Label>
                   <Input placeholder="Price" id="price" {...register("price")} />
                   <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.price?.message}</p>
                 </div>
               </div>
               <div className="space-y-2">
-                <label htmlFor="productDescription" className={cn(
+                <Label htmlFor="productDescription" className={cn(
                   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-                  productErrors.pictures && "text-destructive")}>Product Images</label>
-                <Input className='' type='file' id="pictures" accept=".jpg, .jpeg, .png, .webp" multiple {...register("pictures", {
-                  onChange: (e) => onFileUpLoad(e, watch("productCode"))
-                })} />
+                  productErrors.pictures && "text-destructive")}>Product Images</Label>
+                <Input className='hidden' type='file' id="pictures" accept=".jpg, .jpeg, .png, .webp" multiple {...register("pictures", { onChange: onFileUpLoad })} />
+                <br />
+                <Label className='inline-block border bg-accent cursor-pointer p-2 rounded-sm  text-xs' htmlFor='pictures'>Upload pictures</Label>
                 <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.pictures?.message}</p>
               </div>
             </div>
@@ -338,8 +348,8 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
                         ))
                       }
                     </CarouselContent>
-                    <CarouselPrevious className='-left-6' />
-                    <CarouselNext className='-right-6' />
+                    <CarouselPrevious className='-left-6' type="button" />
+                    <CarouselNext className='-right-6' type="button" />
                   </Carousel>
                 ) : (
                   <div className='bg-accent p-4 h-full grid place-items-center'>
