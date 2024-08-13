@@ -1,5 +1,9 @@
-export default function AdminDashboard() {
+import DBLayout from "@/components/Dashboard/DBLayout"
+
+const Administrator = () => {
   return (
-    <div>AdminDashboard</div>
+    <DBLayout>Vendor</DBLayout>
   )
 }
+
+export default Administrator;

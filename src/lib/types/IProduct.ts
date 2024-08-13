@@ -29,6 +29,21 @@ export interface INewProduct {
   brandId: string;
 }
 
+export interface IEditProduct {
+  id?: string;
+  productCode: string;
+  productName: string;
+  description: string;
+  categoryId: string;
+  brandId: string;
+  cost: number;
+  price: number;
+  pictures: Array<string>;
+  isActive?: boolean;
+  deleted?: boolean;
+  modifiedAt?: string;
+}
+
 export interface IProductResponse {
   success: boolean;
   message: string;

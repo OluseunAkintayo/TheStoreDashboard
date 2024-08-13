@@ -36,13 +36,14 @@ export default function Login() {
     }
     try {
       const res = await axios.request(options);
-      console.log(res);
       if(res.status === 200) {
         const loginData: ILoginSuccess = res.data;
         sessionStorage.setItem('command', loginData.data.accessToken);
         sessionStorage.setItem('exp', loginData.data.expirationDate);
         sessionStorage.setItem('user', loginData.data.user);
-        navigate("/admin");
+        setTimeout(() => {
+          navigate("/admin");
+        }, 100);
         setLoading(false);
         return;
       }

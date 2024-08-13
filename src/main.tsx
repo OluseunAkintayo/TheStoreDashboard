@@ -4,14 +4,14 @@ import '@/index.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Login from '@Pages/Login';
 import axios from 'axios';
-import Products from '@/Pages/Dashboard/Vendor/Products';
-import { Brands } from '@Pages/Dashboard/Vendor/Brands';
-import { Manufacturers } from '@Pages/Dashboard/Vendor/Manufacturers';
+import Products from '@/Pages/Dashboard/Admin/Products';
+import { Brands } from '@/Pages/Dashboard/Admin/Brands';
+import { Manufacturers } from '@/Pages/Dashboard/Admin/Manufacturers';
 import { Toaster } from '@components/ui/toaster';
 import ProtectedRoute from '@components/ProtectedRoute';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { Categories } from './Pages/Dashboard/Vendor/Categories';
-import Vendor from '@Pages/Dashboard/Vendor';
+import { Categories } from '@Pages/Dashboard/Admin/Categories';
+import Administrator from '@Pages/Dashboard/Admin';
 
 axios.defaults.baseURL = "http://localhost:5279/api/";
 
@@ -25,7 +25,7 @@ ReactDOM.createRoot(document.getElementById('theShop')!).render(
         <Routes>
           <Route path="/auth/login" element={<Login />} />
           <Route element={<ProtectedRoute />}>
-            <Route index path="/admin" element={<Vendor />} />
+            <Route index path="/admin" element={<Administrator />} />
             <Route path="/admin/products" element={<Products />} />
             <Route path="/admin/categories" element={<Categories />} />
             <Route path="/admin/manufacturers" element={<Manufacturers />} />

@@ -11,3 +11,8 @@ export interface ICategory {
   isActive?: boolean,
   createdAt?: string;
 }
+
+export interface IEditManufacturer {
+  manufacturerName: string;
+  isActive: boolean;
+}

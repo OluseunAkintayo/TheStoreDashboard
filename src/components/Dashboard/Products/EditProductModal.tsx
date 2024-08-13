@@ -21,7 +21,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from 'yup';
 import React, { ChangeEvent } from 'react';
-import { INewProduct, IProduct } from '@/lib/types/IProduct';
+import { IEditProduct, INewProduct, IProduct } from '@/lib/types/IProduct';
 import axios, { AxiosRequestConfig } from 'axios';
 import { toast } from '@/components/ui/use-toast';
 import { ICategoryResponse } from '@/lib/types/ICategory';
@@ -50,28 +50,30 @@ interface IEditProductModal {
 const schema = yup.object().shape({
   productCode: yup.string().required('Product code is required'),
   productName: yup.string().required('Product name is required'),
-  productDescription: yup.string().required('Product summary is required'),
-  cost: yup.number().typeError('Must be a number').required('Required'),
-  price: yup.number().typeError('Must be a number').required('Required'),
+  description: yup.string().required('Product description is required'),
   categoryId: yup.string().required('Category is required'),
   brandId: yup.string().required('Brand is required'),
+  cost: yup.number().typeError('Must be a number').required('Required'),
+  price: yup.number().typeError('Must be a number').required('Required'),
   pictures: yup.array().typeError("Must be an array").of(yup.string()).min(1, 'At least one image must be added').required("Required")
 });
 
 
 export function EditProductModal({ open, onClose, refetch, product, categoriesQuery, brandsQuery }: IEditProductModal) {
   const token = sessionStorage.getItem("command");
-  const productForm = useForm({ resolver: yupResolver(schema) });
-  const { handleSubmit, register, reset, setValue, watch, formState: { errors: productErrors } } = productForm;
+  const editProductForm = useForm({ resolver: yupResolver(schema) });
+  const { handleSubmit, register, reset, setValue, watch, formState: { errors: productErrors } } = editProductForm;
   const [loading, setLoading] = React.useState<boolean>(false);
   const [openBrandMenu, setOpenBrandMenu] = React.useState<boolean>(false);
   const [openCategoryMenu, setOpenCategoryMenu] = React.useState<boolean>(false);
 
-  const submit: SubmitHandler<INewProduct> = async (values) => {
+  const submit: SubmitHandler<IEditProduct> = async (values) => {
+    console.log(values);
+    return;
     setLoading(true);
     const options: AxiosRequestConfig = {
       url: "products/update/" + product?.id,
-      method: "POST",
+      method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`
       },
@@ -109,13 +111,6 @@ export function EditProductModal({ open, onClose, refetch, product, categoriesQu
     }
   }
 
-  React.useEffect(() => {
-    if (sessionStorage.getItem("manufacturerId")) sessionStorage.removeItem("manufacturerId");
-    if (sessionStorage.getItem("categoryId")) sessionStorage.removeItem("categoryId");
-    if (sessionStorage.getItem("brandId")) sessionStorage.removeItem("brandId");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const [images, setImages] = React.useState<{ fileNames: Array<string>, tempUris: Array<string>, imgUris: Array<string> }>({ fileNames: [], tempUris: [], imgUris: [] });
   const onFileUpLoad = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -140,6 +135,15 @@ export function EditProductModal({ open, onClose, refetch, product, categoriesQu
       }
     }
   }
+
+  React.useEffect(() => {
+    if (sessionStorage.getItem("manufacturerId")) sessionStorage.removeItem("manufacturerId");
+    if (sessionStorage.getItem("categoryId")) sessionStorage.removeItem("categoryId");
+    if (sessionStorage.getItem("brandId")) sessionStorage.removeItem("brandId");
+    console.log(watch());
+    console.log({ product });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <AlertDialog open={open}>
@@ -170,16 +174,18 @@ export function EditProductModal({ open, onClose, refetch, product, categoriesQu
                   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
                   productErrors.productName && "text-destructive"
                 )}>Product Name</Label>
-                <Input placeholder="Enter product name" id="productName" defaultValue={product?.productName} {...register("productName")} />
+                <Input placeholder="Enter product name" id="productName" {...register("productName", {
+                  value: product?.productName
+                })} />
                 <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.productName?.message}</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="productDescription" className={cn(
                   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-                  productErrors.productDescription && "text-destructive"
+                  productErrors.description && "text-destructive"
                 )}>Product Summary</Label>
-                <Textarea placeholder="Enter product summary" id="productDescription" defaultValue={product?.productDescription} {...register("productDescription")} />
-                <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.productDescription?.message}</p>
+                <Textarea placeholder="Enter product summary" id="productDescription" defaultValue={product?.productDescription} {...register("description")} />
+                <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{productErrors.description?.message}</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="categoryId" className={cn(

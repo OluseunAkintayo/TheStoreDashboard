@@ -3,14 +3,6 @@ import DBLayout from "@components/Dashboard/DBLayout";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import axios, { AxiosRequestConfig } from "axios";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -22,9 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 import { IManufacturerResponse } from "@/lib/types/IManufacturer";
-import ManufacturersList from "@/components/Dashboard/ManufacturersList";
 import { Button } from "@/components/ui/button";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -33,6 +23,8 @@ import { Loader } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import ManufacturersList from "@/components/Dashboard/Manufacturers/ManufacturerList";
+import ManufacturerLoading from "@/components/Dashboard/Manufacturers/ManufacturerLoading";
 
 interface INewManufacturer {
   name: string;
@@ -136,7 +128,7 @@ export function Manufacturers() {
                           <FormItem>
                             <FormLabel>Manufacturer Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter manufacturer's name" {...field} />
+                              <Input placeholder="Enter manufacturer's name" autoFocus {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -154,32 +146,7 @@ export function Manufacturers() {
             <Separator className="my-4" />
           </div>
           <React.Fragment>
-            {
-              manufacturers.isLoading && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">S/N</TableHead>
-                      <TableHead>Manufacturer Name</TableHead>
-                      <TableHead>Date Created</TableHead>
-                      <TableHead className="text-center">Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {
-                      Array(10).fill(0).map((i) => (
-                        <TableRow key={i}>
-                          <TableCell className="font-medium"><Skeleton className="h-[32px] w-full bg-gray-300" /></TableCell>
-                          <TableCell><Skeleton className="h-[32px] w-full bg-gray-300" /></TableCell>
-                          <TableCell><Skeleton className="h-[32px] w-full bg-gray-300" /></TableCell>
-                          <TableCell className="grid place-items-center"><Skeleton className="h-[32px] w-full bg-gray-300" /></TableCell>
-                        </TableRow>
-                      ))
-                    }
-                  </TableBody>
-                </Table>
-              )
-            }
+            {manufacturers.isLoading && <ManufacturerLoading />}
           </React.Fragment>
           <React.Fragment>
             {
@@ -192,7 +159,7 @@ export function Manufacturers() {
           </React.Fragment>
           <React.Fragment>
             {
-              (!manufacturers.isError && manufacturers.data && manufacturers.data.success) && <ManufacturersList data={manufacturers.data.data} />
+              (!manufacturers.isError && manufacturers.data && manufacturers.data.success) && <ManufacturersList refetch={manufacturers.refetch} data={manufacturers.data.data} />
             }
           </React.Fragment>
         </div>

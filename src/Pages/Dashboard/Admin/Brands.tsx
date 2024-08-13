@@ -176,7 +176,7 @@ export function Brands() {
                         "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
                         brandErrors.brandName && "text-destructive"
                       )}>Brand Name</label>
-                      <Input placeholder="Enter brand name" id="brandName" {...register("brandName")} />
+                      <Input placeholder="Enter brand name" autoFocus id="brandName" {...register("brandName")} />
                       <p className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-destructive">{brandErrors.brandName?.message}</p>
                     </div>
                     <div className="space-y-2">
