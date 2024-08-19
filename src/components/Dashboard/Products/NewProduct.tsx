@@ -163,6 +163,7 @@ export function NewProduct({ open, onClose, refetch, categoriesQuery, brandsQuer
 
   React.useEffect(() => {
     setValue("pictures", images.imgUris);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [images.imgUris]);
 
   return (

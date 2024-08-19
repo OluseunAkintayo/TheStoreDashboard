@@ -21,7 +21,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from 'yup';
 import React, { ChangeEvent } from 'react';
-import { IEditProduct, INewProduct, IProduct } from '@/lib/types/IProduct';
+import { IEditProduct, IProduct } from '@/lib/types/IProduct';
 import axios, { AxiosRequestConfig } from 'axios';
 import { toast } from '@/components/ui/use-toast';
 import { ICategoryResponse } from '@/lib/types/ICategory';
@@ -55,7 +55,8 @@ const schema = yup.object().shape({
   brandId: yup.string().required('Brand is required'),
   cost: yup.number().typeError('Must be a number').required('Required'),
   price: yup.number().typeError('Must be a number').required('Required'),
-  pictures: yup.array().typeError("Must be an array").of(yup.string()).min(1, 'At least one image must be added').required("Required")
+  pictures: yup.array().typeError("Must be an array").of(yup.string())
+    // .required("Required")
 });
 
 
@@ -137,14 +138,20 @@ export function EditProductModal({ open, onClose, refetch, product, categoriesQu
   }
 
   React.useEffect(() => {
-    if (sessionStorage.getItem("manufacturerId")) sessionStorage.removeItem("manufacturerId");
-    if (sessionStorage.getItem("categoryId")) sessionStorage.removeItem("categoryId");
-    if (sessionStorage.getItem("brandId")) sessionStorage.removeItem("brandId");
-    console.log(watch());
     console.log({ product });
+    setValue("pictures", product?.pictures);
+    return () => {
+      if (sessionStorage.getItem("manufacturerId")) sessionStorage.removeItem("manufacturerId");
+      if (sessionStorage.getItem("categoryId")) sessionStorage.removeItem("categoryId");
+      if (sessionStorage.getItem("brandId")) sessionStorage.removeItem("brandId");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // React.useEffect(() => {
+  //   console.log(watch());
+  // }, [watch]);
+  
   return (
     <AlertDialog open={open}>
       <AlertDialogContent className="max-h-[80dvh] overflow-y-auto max-w-[1440px]">

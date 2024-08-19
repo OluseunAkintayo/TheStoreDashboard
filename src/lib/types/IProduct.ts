@@ -38,7 +38,7 @@ export interface IEditProduct {
   brandId: string;
   cost: number;
   price: number;
-  pictures: Array<string>;
+  pictures?: Array<string | undefined>;
   isActive?: boolean;
   deleted?: boolean;
   modifiedAt?: string;
