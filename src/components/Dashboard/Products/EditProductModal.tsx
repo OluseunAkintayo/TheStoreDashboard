@@ -139,7 +139,10 @@ export function EditProductModal({ open, onClose, refetch, product, categoriesQu
 
   React.useEffect(() => {
     console.log({ product });
-    setValue("pictures", product?.pictures);
+    if(product) {
+      setValue("pictures", product?.pictures);
+      setValue("categoryId", product?.categoryId)
+    }
     return () => {
       if (sessionStorage.getItem("manufacturerId")) sessionStorage.removeItem("manufacturerId");
       if (sessionStorage.getItem("categoryId")) sessionStorage.removeItem("categoryId");
